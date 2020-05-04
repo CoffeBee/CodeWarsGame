@@ -1,0 +1,5 @@
+name: Codewars Game
+version: ${project.version}
+main: me.podvorniy.codewarsgame.codewarsgame.CodewarsGame
+api-version: 1.13
+authors: [CoffeBee]
