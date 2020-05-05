@@ -24,4 +24,10 @@ public final class CodewarsGame extends JavaPlugin {
         }
         player.sendMessage(ChatColor.GREEN + "You entire to codeWars game!");
     }
+    public boolean changePlayerTeam(Player player, int teamNumber) {
+        return game.changePlayerTeam(player, teamNumber);
+    }
+    public boolean isGameStarted() {
+        return game.isGameStarted();
+    }
 }
