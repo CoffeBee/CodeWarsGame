@@ -1,4 +1,4 @@
-name: Codewars Game
+name: CodewarsGame
 version: ${project.version}
 main: me.podvorniy.codewarsgame.codewarsgame.CodewarsGame
 api-version: 1.13
