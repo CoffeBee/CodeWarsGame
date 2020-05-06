@@ -1,6 +1,7 @@
 package me.podvorniy.codewarsgame.codewarsgame.listeners;
 
 import me.podvorniy.codewarsgame.codewarsgame.CodewarsGame;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,6 +10,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
 
 public class interfaceListener implements Listener {
     private CodewarsGame plugin;
@@ -50,7 +55,12 @@ public class interfaceListener implements Listener {
                 p.sendMessage("Here will be rules)))!");
             }
             else if (p.getInventory().getItemInMainHand().getType() == Material.COMPASS) {
-                // Here GUI will open)
+                Inventory inv = Bukkit.createInventory(null, 9, "Team select");
+                List<ItemStack> itesm = plugin.getBlocksForSelect();
+                for (int i = 0; i < itesm.size(); i++) {
+                    inv.addItem(itesm.get(i));
+                }
+                p.openInventory(inv);
             }
         }
     }

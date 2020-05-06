@@ -33,6 +33,8 @@ public class Game {
     private List<Material> colorsBlocks;
     private List<ChatColor> colorsCharColor;
     public Game(CodewarsGame plugin) {
+        plugin.getConfig().set("is_started", true);
+        plugin.saveConfig();
         this.plugin = plugin;
         this.initGenerators();;
         this.initLobby();
@@ -64,6 +66,8 @@ public class Game {
         players.add(player);
         player.teleport(lobbyPoint);
         player.setGameMode(GameMode.ADVENTURE);
+        player.setHealth(20);
+        player.setFoodLevel(20);
         player.getInventory().clear();
 
         ItemStack rulePapper = new ItemStack(Material.PAPER, 1);
@@ -100,16 +104,47 @@ public class Game {
         plugin.getLogger().warning("!!!!!!PLayer didn't added");
         return false;
     }
+    public void removePLayer(Player p) {
+        for (int i = 0; i < teamNumber; i++) {
+            if (teams.get(i).contains(p)) {
+                teams.get(i).remove(p);
+                return;
+            }
+        }
+    }
+    public void respawnPlayer(Player player) {
+        player.teleport(lobbyPoint);
+        player.setGameMode(GameMode.ADVENTURE);
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.getInventory().clear();
 
-    public boolean changePlayerTeam(Player p, int teamNumber) {
-        if (teams.get(teamNumber).size() == playersPerTeam) {
+        ItemStack rulePapper = new ItemStack(Material.PAPER, 1);
+        ItemMeta rulePapperMeta = rulePapper.getItemMeta();
+        rulePapperMeta.setDisplayName(ChatColor.DARK_RED + "Magic paper with game rules");
+        rulePapperMeta.setLore(Arrays.asList(ChatColor.RED + "Click to read codewars ruls"));
+        rulePapper.setItemMeta(rulePapperMeta);
+        player.getInventory().addItem(rulePapper);
+
+        ItemStack teamSelector = new ItemStack(Material.COMPASS, 1);
+        ItemMeta teamSelectorMeta = teamSelector.getItemMeta();
+        teamSelectorMeta.setDisplayName(ChatColor.DARK_RED + "This compass can help with team selecting");
+        teamSelectorMeta.setLore(Arrays.asList(ChatColor.RED + "Click to select tema"));
+        teamSelector.setItemMeta(teamSelectorMeta);
+        player.getInventory().addItem(teamSelector);
+
+    }
+    public boolean changePlayerTeam(Player p, int new_team) {
+        if (teams.get(new_team).size() == playersPerTeam) {
             p.sendMessage("Sorry, but that team is full");
             return false;
         }
         for (int i = 0; i < teamNumber; i++) {
             if (teams.get(i).contains(p)) {
+                p.sendMessage("Now you are in " + colorsCharColor.get(new_team) + colorsName.get(new_team));
                 teams.get(i).remove(p);
-                teams.get(teamNumber).add(p);
+                teams.get(new_team).add(p);
+                logTeams();
                 return true;
             }
         }
@@ -125,6 +160,15 @@ public class Game {
     private void runSpawners() {
 
     }
+    private void logTeams() {
+        for (int i = 0; i < teamNumber; i++) {
+            String res = colorsName.get(i) + ": ";
+            for (int j = 0; j < teams.get(i).size(); j++) {
+                res += teams.get(i).get(j).getDisplayName() + " ";
+            }
+            plugin.getLogger().info(res);
+        }
+    }
     private void teleportAllPlayersToTheirSpawns() {
         for (int i = 0; i < teamNumber; i++) {
             for (int j = 0; j < teams.get(teamNumber).size(); j++) {
@@ -138,16 +182,53 @@ public class Game {
         teleportAllPlayersToTheirSpawns();
         gameState = GameState.ACTIVE;
     }
+    public List<ItemStack> getIteamStacksForTeamSelector() {
+        List<ItemStack> result = new ArrayList<>();
+        for (int i = 0; i < teamNumber; i++) {
+            result.add(new ItemStack(colorsBlocks.get(i), playersPerTeam - teams.get(i).size()));
+        }
+        return result;
+
+    }
     private void initNumbers() {
+        minPLayerNumber = plugin.getConfig().getInt("minPLayerNumber");
+        playersPerTeam = plugin.getConfig().getInt("playersPerTeam");
+        teamNumber = plugin.getConfig().getInt("teamNumber");
+        plugin.getLogger().info("minPLayerNumber:" + String.valueOf(minPLayerNumber));
+        plugin.getLogger().info("playersPerTeam:" +String.valueOf(playersPerTeam));
+        plugin.getLogger().info("teamNumber:" +String.valueOf(teamNumber));
 
     }
     private void initSpawns() {
-
+        for (int i = 0; i < teamNumber; i++) {
+            String path = "spawns." + colorsName.get(i).toLowerCase() + ".";
+            Double x = plugin.getConfig().getDouble(path + "x");
+            Double y = plugin.getConfig().getDouble(path + "y");
+            Double z = plugin.getConfig().getDouble(path + "z");
+            plugin.getLogger().info("spawnPoint of " + colorsName.get(i)  + " team:" + String.valueOf(x) + ", " + String.valueOf(y) + ", " + String.valueOf(z));
+            spawns.add(new Location(plugin.getServer().getWorld("world"), x, y, z));
+        }
     }
     private void initLobby() {
-
+        Double x = plugin.getConfig().getDouble("lobbyPoint.x");
+        Double y = plugin.getConfig().getDouble("lobbyPoint.y");
+        Double z = plugin.getConfig().getDouble("lobbyPoint.z");
+        plugin.getLogger().info("lobbyPoint:" + String.valueOf(x) + ", " + String.valueOf(y) + ", " + String.valueOf(z));
+        lobbyPoint = new Location(plugin.getServer().getWorld("world"), x, y, z);
     }
     private void initGenerators() {
+        Integer generatorsCount = plugin.getConfig().getInt("generatorsCount");
+        for (int i = 0; i < generatorsCount; i++) {
+            String path = "generators.generator" + String.valueOf(i) + ".";
+            Double x = plugin.getConfig().getDouble(path + "x");
+            Double y = plugin.getConfig().getDouble(path + "y");
+            Double z = plugin.getConfig().getDouble(path + "z");
+            plugin.getLogger().info("generatorPoint №" + String.valueOf(i) + ": " + String.valueOf(x) + ", " + String.valueOf(y) + ", " + String.valueOf(z));
+            Location generatorLocation = new Location(plugin.getServer().getWorld("world"), x, y, z);
+            Integer generatorType = plugin.getConfig().getInt(path + "type");
+            Integer generatorLevel = plugin.getConfig().getInt(path + "type");
+            generators.add(new Generator(generatorLevel, Generator.GeneratorType.values()[generatorType], generatorLocation));
 
+        }
     }
 }
